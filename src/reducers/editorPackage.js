@@ -49,6 +49,61 @@ const UPDATERS = {
     return { descriptor: { ...descriptor, ...payload } }
   },
 
+  // Views
+
+  ADD_VIEW: ({ descriptor }, {}) => {
+    descriptor = cloneDeep(descriptor)
+    descriptor.views = descriptor.views
+    descriptor.views.push({})
+    return { descriptor }
+  },
+
+  REMOVE_VIEW: ({ descriptor, tables }, { viewIndex }) => {
+    descriptor = cloneDeep(descriptor)
+    descriptor.views.splice(viewIndex, 1)
+    return { descriptor, tables }
+  },
+
+  UPDATE_VIEW: ({ descriptor }, { viewIndex, payload }) => {
+    descriptor = cloneDeep(descriptor)
+    descriptor.views[viewIndex] = {
+      ...descriptor.views[viewIndex],
+      ...payload,
+    }
+    return { descriptor }
+  },
+
+  UPDATE_VIEW_SPEC: ({ descriptor }, { viewIndex, payload }) => {
+    descriptor = cloneDeep(descriptor)
+    descriptor.views[viewIndex].spec = {
+      ...descriptor.views[viewIndex].spec,
+      ...payload,
+    }
+    return { descriptor }
+  },
+
+  ADD_VIEW_LEGEND: ({ descriptor }, { viewIndex }) => {
+    descriptor = cloneDeep(descriptor)
+    // descriptor.views[viewIndex].spec.le = descriptor.label
+    descriptor.views[viewIndex].spec.legend.push({})
+    return { descriptor }
+  },
+
+  REMOVE_VIEW_LEGEND: ({ descriptor, tables }, { viewIndex, legendIndex }) => {
+    descriptor = cloneDeep(descriptor)
+    descriptor.views[viewIndex].spec.legend.splice(legendIndex, 1)
+    return { descriptor, tables }
+  },
+
+  UPDATE_VIEW_LEGEND: ({ descriptor }, { viewIndex, legendIndex, payload }) => {
+    descriptor = cloneDeep(descriptor)
+    descriptor.views[viewIndex].spec.legend[legendIndex] = {
+      ...descriptor.views[viewIndex].spec.legend[legendIndex],
+      ...payload,
+    }
+    return { descriptor }
+  },
+
   // Resources
 
   ADD_RESOURCE: ({ descriptor }, {}) => {
@@ -73,32 +128,35 @@ const UPDATERS = {
     return { descriptor }
   },
 
-  UPLOAD_DATA: ({ descriptor }, { resourceIndex, headers, rows }) => {
+  UPLOAD_DATA: ({ descriptor }, { resourceIndex, payload }) => {
     descriptor = cloneDeep(descriptor)
-    const schemaDescriptor = descriptor.resources[resourceIndex].schema
+    console.log("importing data from upload")
+    console.log(payload)
+    descriptor.resources[resourceIndex]["data"] = payload.json
 
+    // const schemaDescriptor = descriptor.resources[resourceIndex].schema
     // Get columns
-    const columns = []
-    for (const [index, header] of headers.entries()) {
-      columns[index] = columns[index] || { header, values: [] }
-      for (const row of rows) {
-        columns[index].values.push(row[index])
-      }
-    }
+    // const columns = []
+    // for (const [index, header] of headers.entries()) {
+    //   columns[index] = columns[index] || { header, values: [] }
+    //   for (const row of rows) {
+    //     columns[index].values.push(row[index])
+    //   }
+    // }
 
     // Infer columns
-    for (const column of columns) {
-      const schema = new Schema()
-      schema.infer(column.values, { headers: [column.header] })
-      column.descriptor = schema.descriptor.fields[0]
-    }
+    // for (const column of columns) {
+    //   const schema = new Schema()
+    //   schema.infer(column.values, { headers: [column.header] })
+    //   column.descriptor = schema.descriptor.fields[0]
+    // }
 
     // Update descriptor
-    schemaDescriptor._columns = columns
-    for (const [index, column] of columns.entries()) {
-      const field = schemaDescriptor.fields[index]
-      if (field) schemaDescriptor.fields[index] = { ...field, ...column.descriptor }
-    }
+    // schemaDescriptor._columns = columns
+    // for (const [index, column] of columns.entries()) {
+    //   const field = schemaDescriptor.fields[index]
+    //   if (field) schemaDescriptor.fields[index] = { ...field, ...column.descriptor }
+    // }
 
     return { descriptor }
   },
@@ -194,6 +252,33 @@ const UPDATERS = {
     }
   },
 
+  // Sources
+
+  ADD_SOURCE: ({ descriptor }, { source }) => {
+    if (!descriptor.sources.includes(source)) {
+      descriptor = cloneDeep(descriptor)
+      descriptor.sources = descriptor.sources
+      descriptor.sources.push(source)
+      return { descriptor }
+    }
+  },
+
+  REMOVE_SOURCE: ({ descriptor }, { source }) => {
+    if (descriptor.sources) {
+      descriptor = cloneDeep(descriptor)
+      descriptor.sources = without(descriptor.sources, source)
+      return { descriptor }
+    }
+  },
+
+  UPDATE_SOURCE: ({ descriptor }, { source, newSource }) => {
+    if (descriptor.sources) {
+      descriptor = cloneDeep(descriptor)
+      descriptor.sources[descriptor.sources.indexOf(source)] = newSource
+      return { descriptor }
+    }
+  },
+
   // Interface
 
   TOGGLE_PREVIEW: ({ isPreviewActive }, {}) => {
@@ -207,12 +292,15 @@ const UPDATERS = {
 function processState(state) {
   // Descriptor
   state.descriptor.keywords = state.descriptor.keywords || []
+  state.descriptor.sources = state.descriptor.sources || []
   state.descriptor.resources = state.descriptor.resources || []
   for (const [resourceIndex, resource] of state.descriptor.resources.entries()) {
     resource._key = resource._key || resource.name || uuidv4()
-    resource.name = resource.name || `resource${resourceIndex + 1}`
+    resource.name = resource.name || `resource-${resourceIndex + 1}`
     resource.path = resource.path || ''
-    resource.profile = resource.profile || 'tabular-data-resource'
+    resource.data= resource.data || 'data'
+    resource.mediatype = resource.mediatype || 'application/geo+json'
+    resource.profile = resource.profile || 'geojson-data-resource'
     if (resource.path instanceof Array) {
       resource.path = resource.path[0]
     }
@@ -232,6 +320,34 @@ function processState(state) {
       field.format = field.format || 'default'
     }
   }
+  state.descriptor.views = state.descriptor.views || []
+  for (const [viewIndex, view] of state.descriptor.views.entries()) {
+    view._key = view._key || view.name || uuidv4()
+    view.name = view.name || `view-${viewIndex + 1}`
+    view.spec = view.spec || {}
+    view.spec.bounds = view.spec.bounds || ["geo:47.02583757,8.28744953", "geo:47.07482274,8.33503335"]
+    view.spec.title = view.spec.title || ''
+    view.spec.description = view.spec.description || ''
+    view.specType = view.specType || 'gemeindescanSnapshot'
+    view.resources = []
+    for (const [resourceIndex, resource] of state.descriptor.resources.entries()){
+      view.resources.push(resource.name)
+    }
+    view.resources = view.resources || []
+    view.spec.legend = view.spec.legend || []
+    for (const [legendIndex, legend] of view.spec.legend.entries()) {
+      legend._key = legend._key || legend.label || uuidv4()
+      legend.label = legend.label || `legend-${legendIndex + 1}`
+      legend.fillColor = legend.fillColor || `#ffffff`
+      legend.fillOpacity = legend.fillOpacity || 1.0
+      legend.strokeColor = legend.strokeColor || `#000000`
+      legend.strokeOpacity = legend.strokeOpacity || 1.0
+      legend.strokeWidth = legend.strokeWidth || 1
+      legend.shape = legend.shape || `circle`
+      legend.size = legend.size || 1.0
+      legend.primary = legend.primary || true
+    }
+  }
 
   // Public descriptor
   state.publicDescriptor = cloneDeep(state.descriptor)
@@ -243,6 +359,23 @@ function processState(state) {
       for (const field of resource.schema.fields) {
         delete field._key
       }
+    }
+  }
+
+  for (const view of state.publicDescriptor.views || []) {
+    delete view._key
+    if (view.spec && view.spec.legend) {
+      for (const legend of view.spec.legend) {
+        delete legend._key
+      }
+    }
+  }
+
+  // Preview descriptor
+  state.previewDescriptor = cloneDeep(state.publicDescriptor)
+  for (const resource of state.previewDescriptor.resources || []) {
+    if (resource.mediatype == 'application/geo+json') {
+      resource.data = '{ ... GeoJSON ... (not rendered in preview) }'
     }
   }
 

@@ -5,7 +5,7 @@ const { connect } = require('react-redux')
 
 function EditorPreviewPure({
   // Props
-  publicDescriptor,
+  previewDescriptor,
 
   // Handlers
   onToggleClick,
@@ -22,7 +22,7 @@ function EditorPreviewPure({
 
       {/* Code */}
       <pre>
-        <code className="language-json">{JSON.stringify(publicDescriptor, null, 2)}</code>
+        <code className="language-json">{JSON.stringify(previewDescriptor, null, 2)}</code>
       </pre>
     </section>
   )

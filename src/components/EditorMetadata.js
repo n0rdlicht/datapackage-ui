@@ -65,6 +65,7 @@ function EditorMetadataPure({
             defaultValue={descriptor.profile}
             onChange={partial(onUpdateChange, 'profile')}
           >
+            <option value="spatial-data-package">Spatial Data Package</option>
             <option value="data-package">Data Package</option>
             <option value="tabular-data-package">Tabular Data Package</option>
             <option value="fiscal-data-package">Fiscal Data Package</option>

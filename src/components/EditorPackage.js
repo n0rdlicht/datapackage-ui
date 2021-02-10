@@ -4,6 +4,7 @@ const { connect } = require('react-redux')
 const { EditorSidebar } = require('./EditorSidebar')
 const { EditorPreview } = require('./EditorPreview')
 const { EditorResource } = require('./EditorResource')
+const { EditorView } = require('./EditorView')
 const { createReducer } = require('../reducers/editorPackage')
 
 // Pure components
@@ -14,11 +15,13 @@ function EditorPackagePure({
   // Subscribed
   isPreviewActive,
   publicDescriptor,
+  previewDescriptor,
   descriptor,
   feedback,
 
   // Handlers
   onAddResourceClick,
+  onAddViewClick,
 }) {
   return (
     <div className={classNames('app', 'datapackage-ui', { 'code-view': isPreviewActive })}>
@@ -75,10 +78,40 @@ function EditorPackagePure({
             Add resource
           </a>
         </div>
+        <div>
+          <header className="section-heading">
+            <h2>Views</h2>
+          </header>
+
+          {/* List views */}
+          <div
+            className="panel-group"
+            id="views-data"
+            role="tablist"
+            aria-multiselectable="true"
+          >
+            {descriptor.views.map((viewDescriptor, viewIndex) => (
+              <EditorView
+                descriptor={viewDescriptor}
+                isSettingsActive={false}
+                viewIndex={viewIndex}
+                key={viewDescriptor._key}
+              />
+            ))}
+          </div>
+
+          {/* Add view */}
+          <a className="add resource" onClick={onAddViewClick}>
+            <svg>
+              <use xlinkHref="#icon-plus" />
+            </svg>
+            Add View
+          </a>
+        </div>
       </section>
 
       {/* Preview */}
-      <EditorPreview publicDescriptor={publicDescriptor} />
+      <EditorPreview previewDescriptor={previewDescriptor} />
 
       {/* Svg */}
       <svg className="svgstore">
@@ -146,6 +179,7 @@ const mapStateToProps = (state) => {
   return {
     isPreviewActive: state.isPreviewActive,
     publicDescriptor: state.publicDescriptor,
+    previewDescriptor: state.previewDescriptor,
     descriptor: state.descriptor,
     feedback: state.feedback,
   }
@@ -157,6 +191,11 @@ const mapDispatchToProps = (dispatch) => ({
   onAddResourceClick: () => {
     dispatch({
       type: 'ADD_RESOURCE',
+    })
+  },
+  onAddViewClick: () => {
+    dispatch({
+      type: 'ADD_VIEW',
     })
   },
 })

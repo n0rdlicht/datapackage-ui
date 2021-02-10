@@ -141,6 +141,25 @@ function EditorResourcePure({
               onBlur={partial(onUpdateChange, 'title')}
             />
 
+            {/* Mediatype */}
+          <label htmlFor={makeId(descriptor,'mediatype')} className="control-label">
+            Media Type
+          </label>
+          <select
+            id={makeId(descriptor,'mediatype')}
+            data-id="list-container"
+            className="form-control list-container"
+            autoComplete="off"
+            defaultValue={descriptor.mediatype}
+            onChange={partial(onUpdateChange, 'mediatype')}
+          >
+            <option value="application/csv">CSV</option>
+            <option value="application/json">JSON</option>
+            <option value="application/geo+json">GeoJSON with Simple Styles</option>
+            <option value="application/vnd.simplestyles-extended">Extended Simple Styles (Circles)</option>
+            <option value="application/vnd.mapbox-vector-tile">Mapbox Style</option>
+          </select>
+
             {/* Profile */}
             <label htmlFor={makeId(descriptor, 'profile')} className="control-label">
               Profile
@@ -155,6 +174,8 @@ function EditorResourcePure({
             >
               <option value="data-resource">Data Resource</option>
               <option value="tabular-data-resource">Tabular Data Resource</option>
+              <option value="geojson-data-resource">GeoJSON Data Resource</option>
+              <option value="other-resource">Other Resource</option>
             </select>
 
             {/* Format */}
@@ -266,7 +287,7 @@ const mapDispatchToProps = (dispatch, { resourceIndex, descriptor }) => ({
       dispatch({
         type: 'UPDATE_RESOURCE',
         payload: { path },
-        resourceIndex,
+        resourceIndex
       })
     }
     dispatch(async () => {
@@ -274,15 +295,21 @@ const mapDispatchToProps = (dispatch, { resourceIndex, descriptor }) => ({
       const stream = new Readable()
       stream.push(text)
       stream.push(null)
-      const table = await Table.load(stream)
-      const rows = await table.read({ limit: EDITOR_UPLOAD_ROWS_LIMIT })
-      const headers = table.headers
+      
+      const rows = null
+      const headers = null
+      
+      var obj = await JSON.parse(text)
+      console.log(obj)
+
       dispatch({
         type: 'UPLOAD_DATA',
-        rows,
-        headers,
+        payload: { json: obj },
         resourceIndex,
       })
+      // const table = await Table.load(stream)
+      // const rows = await table.read({ limit: EDITOR_UPLOAD_ROWS_LIMIT })
+      // const headers = table.headers
     })
   },
 })

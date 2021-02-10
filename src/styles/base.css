@@ -1178,7 +1178,7 @@ select[multiple].input-lg {
     line-height: 1.4; }
     .data-cards .card .inner {
       display: block;
-      height: 320px;
+      height: 480px;
       overflow: hidden;
       margin: 20px 0 0 20px;
       position: relative;
@@ -1806,7 +1806,7 @@ select[multiple].input-lg {
       float: left;
       width: 33.33333%; } }
 .app.code-view section.preview {
-  width: 300px; }
+  width: 500px; }
   .app.code-view section.preview .section-heading {
     padding-left: 20px;
     padding-right: 20px; }

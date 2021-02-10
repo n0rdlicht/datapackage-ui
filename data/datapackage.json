@@ -18,5 +18,14 @@
   "keywords": ["tag1", "tag2"],
   "resources": [
     {"name": "table", "path": "table.csv"}
+  ],
+  "views": [
+    {
+      "name":"map-view",
+      "specType": "gemeindescanSnapshot",
+      "title": "",
+      "description": "",
+      "resources": []
+    }
   ]
 }

@@ -2,6 +2,7 @@ const React = require('react')
 const { EditorButtons } = require('./EditorButtons')
 const { EditorMetadata } = require('./EditorMetadata')
 const { EditorKeywords } = require('./EditorKeywords')
+const { EditorSources } = require('./EditorSources')
 
 export function EditorSidebar({ descriptor, publicDescriptor, Buttons }) {
   Buttons = Buttons || EditorButtons
@@ -49,6 +50,9 @@ export function EditorSidebar({ descriptor, publicDescriptor, Buttons }) {
         <div className="panel-group" id="package-data" role="tablist" aria-multiselectable="true">
           {/* Metadata */}
           <EditorMetadata descriptor={descriptor} />
+          
+          {/* Sources */}
+          {/* <EditorSources sources={descriptor.sources} /> */}
 
           {/* Keywords */}
           <EditorKeywords keywords={descriptor.keywords} />
